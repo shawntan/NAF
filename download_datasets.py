@@ -18,7 +18,7 @@ import time
 
 
 savedir = 'dataset/'
-mnist = False
+mnist = True
 cifar10 = False
 omniglot = False
 maf = True
