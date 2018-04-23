@@ -44,60 +44,60 @@ class VAE(object):
         if flowtype == 'affine':
             flow = flows.IAF
         elif flowtype == 'dsf':
-            flow = lambda **kwargs:flows.IAF_DSF(num_ds_dim=num_ds_dim,
-                                                 num_ds_layers=num_ds_layers,
-                                                 **kwargs)
-        elif flowtype == 'ddsf':
-            flow = lambda **kwargs:flows.IAF_DDSF(num_ds_dim=num_ds_dim,
+            flow = lambda **kwargs: flows.IAF_DSF(num_ds_dim=num_ds_dim,
                                                   num_ds_layers=num_ds_layers,
                                                   **kwargs)
+        elif flowtype == 'ddsf':
+            flow = lambda **kwargs: flows.IAF_DDSF(num_ds_dim=num_ds_dim,
+                                                   num_ds_layers=num_ds_layers,
+                                                   **kwargs)
 
         self.enc = nn.Sequential(
-                nn_.ResConv2d(1,16,3,2,padding=1,activation=act),
-                act,
-                nn_.ResConv2d(16,16,3,1,padding=1,activation=act),
-                act,
-                nn_.ResConv2d(16,32,3,2,padding=1,activation=act),
-                act,
-                nn_.ResConv2d(32,32,3,1,padding=1,activation=act),
-                act,
-                nn_.ResConv2d(32,32,3,2,padding=1,activation=act),
-                act,
-                nn_.Reshape((-1,32*4*4)),
-                nn_.ResLinear(32*4*4,dimc),
-                act
-                )
+            nn_.ResConv2d(1, 16, 3, 2, padding=1, activation=act),
+            act,
+            nn_.ResConv2d(16, 16, 3, 1, padding=1, activation=act),
+            act,
+            nn_.ResConv2d(16, 32, 3, 2, padding=1, activation=act),
+            act,
+            nn_.ResConv2d(32, 32, 3, 1, padding=1, activation=act),
+            act,
+            nn_.ResConv2d(32, 32, 3, 2, padding=1, activation=act),
+            act,
+            nn_.Reshape((-1, 32*4*4)),
+            nn_.ResLinear(32*4*4, dimc),
+            act
+        )
 
         self.inf = nn.Sequential(
-                flows.LinearFlow(dimz, dimc),
-                *[nn_.SequentialFlow(
-                    flow(dim=dimz,
-                         hid_dim=dimh,
-                         context_dim=dimc,
-                         num_layers=2,
-                         activation=act),
-                    flows.FlipFlow(1)) for i in range(num_flow_layers)])
+            flows.LinearFlow(dimz, dimc),
+            *[nn_.SequentialFlow(
+                flow(dim=dimz,
+                     hid_dim=dimh,
+                     context_dim=dimc,
+                     num_layers=2,
+                     activation=act),
+                flows.FlipFlow(1)) for i in range(num_flow_layers)])
 
         self.dec = nn.Sequential(
-                nn_.ResLinear(dimz,dimc),
-                act,
-                nn_.ResLinear(dimc,32*4*4),
-                act,
-                nn_.Reshape((-1,32,4,4)),
-                nn.Upsample(scale_factor=2,mode='bilinear'),
-                nn_.ResConv2d(32,32,3,1,padding=1,activation=act),
-                act,
-                nn_.ResConv2d(32,32,3,1,padding=1,activation=act),
-                act,
-                nn_.slicer[:,:,:-1,:-1],
-                nn.Upsample(scale_factor=2,mode='bilinear'),
-                nn_.ResConv2d(32,16,3,1,padding=1,activation=act),
-                act,
-                nn_.ResConv2d(16,16,3,1,padding=1,activation=act),
-                act,
-                nn.Upsample(scale_factor=2,mode='bilinear'),
-                nn_.ResConv2d(16,1,3,1,padding=1,activation=act),
-                )
+            nn_.ResLinear(dimz, dimc),
+            act,
+            nn_.ResLinear(dimc, 32*4*4),
+            act,
+            nn_.Reshape((-1, 32, 4, 4)),
+            nn.Upsample(scale_factor=2, mode='bilinear'),
+            nn_.ResConv2d(32, 32, 3, 1, padding=1, activation=act),
+            act,
+            nn_.ResConv2d(32, 32, 3, 1, padding=1, activation=act),
+            act,
+            nn_.slicer[:, :, :-1, :-1],
+            nn.Upsample(scale_factor=2, mode='bilinear'),
+            nn_.ResConv2d(32, 16, 3, 1, padding=1, activation=act),
+            act,
+            nn_.ResConv2d(16, 16, 3, 1, padding=1, activation=act),
+            act,
+            nn.Upsample(scale_factor=2, mode='bilinear'),
+            nn_.ResConv2d(16, 1, 3, 1, padding=1, activation=act),
+        )
 
         self.dec[-1].conv_01.bias.data.normal_(-3, 0.0001)
 
@@ -144,13 +144,14 @@ class VAE(object):
     def iwlb(self, x, niw=1):
         LOSSES = list()
         for i in range(niw):
-            LOSSES.append(sum(self.loss(x,1.0)[1:])[:,None].data.cpu().numpy())
+            LOSSES.append(sum(self.loss(x, 1.0)[1:])[
+                          :, None].data.cpu().numpy())
         return -utils.log_mean_exp_np(-np.concatenate(LOSSES, 1))
 
     def state_dict(self):
         return self.enc.state_dict(), \
-               self.inf.state_dict(), \
-               self.dec.state_dict()
+            self.inf.state_dict(), \
+            self.dec.state_dict()
 
     def load_state_dict(self, states):
         self.enc.load_state_dict(states[0])
@@ -317,8 +318,8 @@ class model(object):
 
     def save(self, fn):
         torch.save(self.vae.state_dict(), fn+'_model.pt')
-        with open(fn+'_args.txt','w') as out:
-            out.write(json.dumps(self.args.__dict__,indent=4))
+        with open(fn+'_args.txt', 'w') as out:
+            out.write(json.dumps(self.args.__dict__, indent=4))
 
     def load(self, fn):
         self.vae.load_state_dict(torch.load(fn+'_model.pt'))
@@ -330,6 +331,8 @@ class model(object):
 
 
 """parsing and configuration"""
+
+
 def parse_args():
     desc = "VAE"
     parser = argparse.ArgumentParser(description=desc)
@@ -367,8 +370,6 @@ def parse_args():
     parser.add_argument('--cuda', default=False, action='store_true')
     parser.add_argument('--final_mode', default=False, action='store_true')
 
-
-
     parser.add_argument('--dimz', type=int, default=32)
     parser.add_argument('--dimc', type=int, default=450)
     parser.add_argument('--dimh', type=int, default=1920)
@@ -377,10 +378,12 @@ def parse_args():
     parser.add_argument('--num_ds_dim', type=int, default=16)
     parser.add_argument('--num_ds_layers', type=int, default=1)
 
-
     return check_args(parser.parse_args())
 
+
 """checking arguments"""
+
+
 def check_args(args):
     # --save_dir
     if not os.path.exists(args.save_dir):
@@ -428,8 +431,8 @@ def main():
     if os.path.isfile(old_fn):
         def without_keys(d, keys):
             return {x: d[x] for x in d if x not in keys}
-        d = without_keys(json.loads(open(old_fn,'r').read()),
-                         ['to_train','epoch','anneal'])
+        d = without_keys(json.loads(open(old_fn, 'r').read()),
+                         ['to_train', 'epoch', 'anneal'])
         args.__dict__.update(d)
         print(" New args:")
         print args

@@ -24,7 +24,6 @@ omniglot = False
 maf = True
 
 
-
 class Progbar(object):
     def __init__(self, target, width=30, verbose=1):
         '''
@@ -47,7 +46,8 @@ class Progbar(object):
         '''
         for k, v in values:
             if k not in self.sum_values:
-                self.sum_values[k] = [v * (current - self.seen_so_far), current - self.seen_so_far]
+                self.sum_values[k] = [
+                    v * (current - self.seen_so_far), current - self.seen_so_far]
                 self.unique_values.append(k)
             else:
                 self.sum_values[k][0] += v * (current - self.seen_so_far)
@@ -121,8 +121,10 @@ class Progbar(object):
 
     def add(self, n, values=[]):
         self.update(self.seen_so_far+n, values)
-        
+
 # mnist
+
+
 def load_mnist_images_np(imgs_filename):
     with open(imgs_filename, 'rb') as f:
         f.seek(4)
@@ -139,9 +141,11 @@ from six.moves.urllib.request import FancyURLopener
 import tarfile
 import sys
 
+
 class ParanoidURLopener(FancyURLopener):
     def http_error_default(self, url, fp, errcode, errmsg, headers):
-        raise Exception('URL fetch failure on {}: {} -- {}'.format(url, errcode, errmsg))
+        raise Exception(
+            'URL fetch failure on {}: {} -- {}'.format(url, errcode, errmsg))
 
 
 def get_file(fname, origin, untar=False):
@@ -183,6 +187,7 @@ def get_file(fname, origin, untar=False):
 
     return fpath
 
+
 def load_batch(fpath, label_key='labels'):
     f = open(fpath, 'rb')
     if sys.version_info < (3,):
@@ -199,7 +204,8 @@ def load_batch(fpath, label_key='labels'):
 
     data = data.reshape(data.shape[0], 3, 32, 32)
     return data, labels
-    
+
+
 def load_cifar10():
     dirname = "cifar-10-batches-py"
     origin = "http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz"
@@ -230,50 +236,49 @@ if __name__ == '__main__':
 
     if not os.path.exists(savedir):
         os.makedirs(savedir)
-    
-    
+
     if mnist:
         print 'dynamically binarized mnist'
         mnist_filenames = ['train-images-idx3-ubyte', 't10k-images-idx3-ubyte']
-        
+
         for filename in mnist_filenames:
             local_filename = os.path.join(savedir, filename)
-            urllib.urlretrieve("http://yann.lecun.com/exdb/mnist/{}.gz".format(filename), local_filename+'.gz')
+            urllib.urlretrieve(
+                "http://yann.lecun.com/exdb/mnist/{}.gz".format(filename), local_filename+'.gz')
             with gzip.open(local_filename+'.gz', 'rb') as f:
                 file_content = f.read()
             with open(local_filename, 'wb') as f:
                 f.write(file_content)
-            np.savetxt(local_filename,load_mnist_images_np(local_filename))
+            np.savetxt(local_filename, load_mnist_images_np(local_filename))
             os.remove(local_filename+'.gz')
 
         print 'statically binarized mnist'
         subdatasets = ['train', 'valid', 'test']
         for subdataset in subdatasets:
             filename = 'binarized_mnist_{}.amat'.format(subdataset)
-            url = 'http://www.cs.toronto.edu/~larocheh/public/datasets/binarized_mnist/binarized_mnist_{}.amat'.format(subdataset)
+            url = 'http://www.cs.toronto.edu/~larocheh/public/datasets/binarized_mnist/binarized_mnist_{}.amat'.format(
+                subdataset)
             local_filename = os.path.join(savedir, filename)
             urllib.urlretrieve(url, local_filename)
-        
+
     if cifar10:
         (X_train, y_train), (X_test, y_test) = load_cifar10()
-        pickle.dump((X_train,y_train,X_test,y_test),
-                    open('{}/cifar10.pkl'.format(savedir),'w'))
-    
-    
+        pickle.dump((X_train, y_train, X_test, y_test),
+                    open('{}/cifar10.pkl'.format(savedir), 'w'))
+
     if omniglot:
         url = 'https://github.com/yburda/iwae/raw/master/datasets/OMNIGLOT/chardata.mat'
         filename = 'omniglot.amat'
         local_filename = os.path.join(savedir, filename)
         urllib.urlretrieve(url, local_filename)
-        
+
     if maf:
         savedir = 'external_maf/datasets'
         url = 'https://zenodo.org/record/1161203/files/data.tar.gz'
         local_filename = os.path.join(savedir, 'data.tar.gz')
         urllib.urlretrieve(url, local_filename)
-        
+
         tar = tarfile.open(local_filename, "r:gz")
         tar.extractall(savedir)
         tar.close()
         os.remove(local_filename)
-        
