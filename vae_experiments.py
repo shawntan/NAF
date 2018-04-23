@@ -10,7 +10,7 @@ import numpy as np
 import torch
 import torch.utils.data as data
 import torch.nn as nn
-#import torch.optim as optim
+# import torch.optim as optim
 from torchkit import optim
 from torch.autograd import Variable
 from torchkit import nn as nn_, flows, utils
@@ -21,8 +21,8 @@ from ops import DatasetWrapper
 from itertools import chain
 
 import time
-import json
-import argparse, os
+import argparse
+import os
 
 
 class VAE(object):
